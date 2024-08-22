@@ -27,7 +27,7 @@ func (issue Issue) Convert(mappings map[int]string) string {
 		author = ghname
 	}
 
-	return fmt.Sprintf("--- IMPORTED ISSUE ---\n[%s] [%s]\n\n%s",
+	return fmt.Sprintf("--- IMPORTED ISSUE ---\n[%s] [@%s]\n\n%s",
 		issue.CreatedAt.Format(time.RFC3339),
 		author,
 		issue.Description)
@@ -52,7 +52,7 @@ func (c Comment) Convert(mappings map[int]string) string {
 	if ghname, ok := mappings[c.AuthorId]; ok {
 		author = ghname
 	}
-	return fmt.Sprintf("--- IMPORTED COMMENT ---\n[%s] [%s]\n\n%s",
+	return fmt.Sprintf("--- IMPORTED COMMENT ---\n[%s] [@%s]\n\n%s",
 		c.CreatedAt.Format(time.RFC3339),
 		author,
 		c.Note)

@@ -17,6 +17,8 @@ func ShowCommand(globals *GlobalVariables) *cobra.Command {
 			Short: descr,
 			Long:  descr,
 			Run: func(cmd *cobra.Command, args []string) {
+				mappings := ReverseMapping(globals.UserMappings)
+
 				// parse ndjson
 				issues, err := gitlab.Parse(globals.ExportPath)
 				if err != nil {
@@ -39,12 +41,14 @@ func ShowCommand(globals *GlobalVariables) *cobra.Command {
 
 				fmt.Println(issue.Summarize())
 
-				fmt.Println(issue.Convert(map[int]string{}))
+				fmt.Println(issue.Convert(mappings))
 
 				for _, comment := range issue.Comments {
-					fmt.Println(comment.Convert(map[int]string{}))
+					fmt.Println(comment.Convert(mappings))
 					fmt.Println("=============================================")
 				}
+
+				fmt.Println(mappings)
 			},
 		}
 	)
