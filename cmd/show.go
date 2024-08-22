@@ -41,14 +41,23 @@ func ShowCommand(globals *GlobalVariables) *cobra.Command {
 
 				fmt.Println(issue.Summarize())
 
-				fmt.Println(issue.Convert(mappings))
+				s, err := issue.Convert(mappings, globals.ReplacePatterns)
+				if err != nil {
+					fmt.Fprintf(cmd.OutOrStderr(), "Error converting issue %d: %v", issueId, err)
+					return
+				}
+				fmt.Println(s)
 
 				for _, comment := range issue.Comments {
-					fmt.Println(comment.Convert())
+					s, err := comment.Convert(globals.ReplacePatterns)
+					if err != nil {
+						fmt.Fprintf(cmd.OutOrStderr(), "Error converting comment for issue %d: %v", issueId, err)
+						return
+					}
+
+					fmt.Println(s)
 					fmt.Println("=============================================")
 				}
-
-				fmt.Println(mappings)
 			},
 		}
 	)

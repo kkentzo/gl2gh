@@ -46,7 +46,10 @@ func PostCommand(globals *GlobalVariables) *cobra.Command {
 
 				// ok, let's now post the issue
 				client := github.NewClient(token, dryRun, globals.Debug)
-				ghIssue := github.New(issue, mappings, labels)
+				ghIssue, err := github.New(issue, mappings, labels, globals.ReplacePatterns)
+				if err != nil {
+					fmt.Fprintf(cmd.OutOrStderr(), "Preparation error: %v\n", err)
+				}
 				if err := ghIssue.Post(client, repo); err != nil {
 					fmt.Fprintf(cmd.OutOrStderr(), "Posting error: %v\n", err)
 				}

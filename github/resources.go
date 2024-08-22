@@ -15,19 +15,27 @@ type Issue struct {
 	comments  []*Comment
 }
 
-func New(glIssue *gitlab.Issue, mappings map[int]string, labels []string) *Issue {
+func New(glIssue *gitlab.Issue, mappings map[int]string, labels []string, replPatterns map[string]string) (*Issue, error) {
+	body, err := glIssue.Convert(mappings, replPatterns)
+	if err != nil {
+		return nil, err
+	}
 	issue := &Issue{
 		Title:     glIssue.Title,
-		Body:      glIssue.Convert(mappings),
+		Body:      body,
 		Labels:    labels,
 		Assignees: FindAssignees(glIssue, mappings),
 		comments:  []*Comment{},
 	}
 	for _, glComment := range glIssue.Comments {
-		comment := &Comment{Body: glComment.Convert()}
+		body, err = glComment.Convert(replPatterns)
+		if err != nil {
+			return nil, err
+		}
+		comment := &Comment{Body: body}
 		issue.comments = append(issue.comments, comment)
 	}
-	return issue
+	return issue, nil
 }
 
 func FindAssignees(glIssue *gitlab.Issue, mappings map[int]string) []string {

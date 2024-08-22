@@ -3,9 +3,10 @@ package cmd
 import "github.com/spf13/cobra"
 
 type GlobalVariables struct {
-	ExportPath   string
-	UserMappings map[string]int
-	Debug        bool
+	ExportPath      string
+	UserMappings    map[string]int
+	ReplacePatterns map[string]string
+	Debug           bool
 }
 
 func ReverseMapping(mapping map[string]int) map[int]string {
@@ -38,6 +39,8 @@ func New() *cobra.Command {
 func requireGlobalFlags(cmd *cobra.Command, globals *GlobalVariables) *cobra.Command {
 	cmd.Flags().StringVarP(&globals.ExportPath, "export", "e", "", "directory that contains the uncompressed gitlab export")
 	cmd.Flags().StringToIntVarP(&globals.UserMappings, "users", "u", map[string]int{}, "mapping of github user names to gitlab UIDs")
+	cmd.Flags().StringToStringVar(&globals.ReplacePatterns, "replace", map[string]string{},
+		"specify pairs of replacement patterns for issue and comment texts (useful for replacing link URIs)")
 	cmd.Flags().BoolVarP(&globals.Debug, "debug", "d", false, "whether to display debugging information")
 	cmd.MarkFlagRequired("export")
 	return cmd

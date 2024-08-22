@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -21,16 +22,21 @@ type Issue struct {
 	CreatedAt time.Time  `json:"created_at"`
 }
 
-func (issue Issue) Convert(mappings map[int]string) string {
+func (issue Issue) Convert(mappings map[int]string, replPatterns map[string]string) (string, error) {
 	author := fmt.Sprintf("%d", issue.AuthorId)
 	if ghname, ok := mappings[issue.AuthorId]; ok {
 		author = "@" + ghname
 	}
 
+	description, err := ReplaceAll(issue.Description, replPatterns)
+	if err != nil {
+		return "", err
+	}
+
 	return fmt.Sprintf("\nISSUE IMPORTED FROM GITLAB\ncreated: `%s`\noriginal author: %s\n\n---\n\n%s",
 		issue.CreatedAt.Format(time.RFC3339),
 		author,
-		issue.Description)
+		description), nil
 }
 
 func (issue Issue) Summarize() string {
@@ -47,11 +53,15 @@ type Comment struct {
 	} `json:"author"`
 }
 
-func (c Comment) Convert() string {
+func (c Comment) Convert(replPatterns map[string]string) (string, error) {
+	description, err := ReplaceAll(c.Note, replPatterns)
+	if err != nil {
+		return "", err
+	}
 	return fmt.Sprintf("\nCOMMENT IMPORTED FROM GITLAB\ncreated: `%s`\noriginal author: %s\n\n---\n\n%s",
 		c.CreatedAt.Format(time.RFC3339),
 		c.Author.Name,
-		c.Note)
+		description), nil
 }
 
 func Parse(path string) ([]*Issue, error) {
@@ -97,6 +107,28 @@ func curateIssues(issues []*Issue) []*Issue {
 	}
 
 	return issues
+}
+
+func ReplaceAll(src string, patterns map[string]string) (string, error) {
+	var err error
+	for expr, repl := range patterns {
+		src, err = Replace(src, expr, repl)
+		if err != nil {
+			return src, fmt.Errorf("failed to apply exp=%s: %v", expr, err)
+		}
+	}
+	return src, nil
+}
+
+// return a copy of src, replacing matches of the regex expr with the replacement string repl.
+// Inside repl, $ signs are interpreted as the texts of the submatches
+// See test file for example(s)
+func Replace(src, expr, repl string) (string, error) {
+	re, err := regexp.Compile(expr)
+	if err != nil {
+		return src, fmt.Errorf("error compiling the regex expression %s: %v", expr, err)
+	}
+	return re.ReplaceAllString(src, repl), nil
 }
 
 func Users(issues []*Issue) []int {
