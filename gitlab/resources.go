@@ -24,10 +24,10 @@ type Issue struct {
 func (issue Issue) Convert(mappings map[int]string) string {
 	author := fmt.Sprintf("%d", issue.AuthorId)
 	if ghname, ok := mappings[issue.AuthorId]; ok {
-		author = ghname
+		author = "@" + ghname
 	}
 
-	return fmt.Sprintf("--- IMPORTED ISSUE ---\n[%s] [@%s]\n\n%s",
+	return fmt.Sprintf("\nISSUE IMPORTED FROM GITLAB\ncreated: `%s`\noriginal author: %s\n\n---\n\n%s",
 		issue.CreatedAt.Format(time.RFC3339),
 		author,
 		issue.Description)
@@ -47,14 +47,10 @@ type Comment struct {
 	} `json:"author"`
 }
 
-func (c Comment) Convert(mappings map[int]string) string {
-	author := fmt.Sprintf("%d", c.AuthorId)
-	if ghname, ok := mappings[c.AuthorId]; ok {
-		author = ghname
-	}
-	return fmt.Sprintf("--- IMPORTED COMMENT ---\n[%s] [@%s]\n\n%s",
+func (c Comment) Convert() string {
+	return fmt.Sprintf("\nCOMMENT IMPORTED FROM GITLAB\ncreated: `%s`\noriginal author: %s\n\n---\n\n%s",
 		c.CreatedAt.Format(time.RFC3339),
-		author,
+		c.Author.Name,
 		c.Note)
 }
 

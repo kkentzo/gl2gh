@@ -35,7 +35,7 @@ func ShowCommand(globals *GlobalVariables) *cobra.Command {
 					}
 				}
 				if issue == nil {
-					fmt.Fprintf(cmd.OutOrStderr(), "Issue with id=%d was not found in exprt file\n", issueId)
+					fmt.Fprintf(cmd.OutOrStderr(), "Issue with id=%d was not found in export file\n", issueId)
 					return
 				}
 
@@ -44,7 +44,7 @@ func ShowCommand(globals *GlobalVariables) *cobra.Command {
 				fmt.Println(issue.Convert(mappings))
 
 				for _, comment := range issue.Comments {
-					fmt.Println(comment.Convert(mappings))
+					fmt.Println(comment.Convert())
 					fmt.Println("=============================================")
 				}
 
