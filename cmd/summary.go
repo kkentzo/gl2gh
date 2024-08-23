@@ -21,9 +21,15 @@ func SummaryCommand(globals *GlobalVariables) *cobra.Command {
 					fmt.Fprintf(cmd.OutOrStderr(), "error: %v\n", err)
 				}
 
+				nc := 0
+
 				for _, issue := range issues {
 					fmt.Fprintf(cmd.OutOrStderr(), issue.Summarize())
+					nc += len(issue.Comments)
 				}
+
+				fmt.Fprintf(cmd.OutOrStderr(), "Issues: %d\n", len(issues))
+				fmt.Fprintf(cmd.OutOrStderr(), "Comments: %d\n", nc)
 			},
 		}
 	)
