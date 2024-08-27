@@ -38,6 +38,16 @@ func New(glIssue *gitlab.Issue, mappings map[int]string, labels []string, replPa
 	return issue, nil
 }
 
+func NewPlaceholder(labels []string) *Issue {
+	return &Issue{
+		Title:     "[DELETED GITLAB ISSUE]",
+		Body:      "This issue was created during the import of gitlab issues in order to preserve the ID ordering of gitlab issue IDs. In reality, it represents a deleted gitlab issue.",
+		Assignees: []string{},
+		Labels:    labels,
+		comments:  []*Comment{},
+	}
+}
+
 func FindAssignees(glIssue *gitlab.Issue, mappings map[int]string) []string {
 	assignees := []string{}
 	for _, assignee := range glIssue.Assignees {
@@ -50,6 +60,10 @@ func FindAssignees(glIssue *gitlab.Issue, mappings map[int]string) []string {
 
 func (issue *Issue) Path(repo string) string {
 	return fmt.Sprintf("/repos/%s/issues", repo)
+}
+
+func (issue *Issue) Comments() []*Comment {
+	return issue.comments
 }
 
 func (issue *Issue) Post(client *Client, repo string) error {

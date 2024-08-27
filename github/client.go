@@ -62,7 +62,9 @@ func (c *Client) Post(uri string, body []byte) ([]byte, error) {
 		return nil, fmt.Errorf("http client: failed to read response body: %v", err)
 	}
 
-	log.Printf("[http] STATUS %d", resp.StatusCode)
+	if c.debug {
+		log.Printf("[http] STATUS %d", resp.StatusCode)
+	}
 
 	if resp.StatusCode != http.StatusCreated {
 		if c.debug {

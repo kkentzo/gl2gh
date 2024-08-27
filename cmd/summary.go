@@ -16,7 +16,7 @@ func SummaryCommand(globals *GlobalVariables) *cobra.Command {
 			Long:  descr,
 			Run: func(cmd *cobra.Command, args []string) {
 				// parse ndjson
-				issues, err := gitlab.Parse(globals.ExportPath)
+				issues, err := gitlab.Parse(globals.ExportPath, globals.CommentExclusionFilter)
 				if err != nil {
 					fmt.Fprintf(cmd.OutOrStderr(), "error: %v\n", err)
 				}

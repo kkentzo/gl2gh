@@ -1,0 +1,10 @@
+default: build
+
+tasks:
+
+  - name: build
+    env:
+      - GOOS: linux
+        GOARCH: amd64
+    actions:
+      - go build -o bin/gl2gh

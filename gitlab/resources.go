@@ -64,7 +64,10 @@ func (c Comment) Convert(replPatterns map[string]string) (string, error) {
 		description), nil
 }
 
-func Parse(path string) ([]*Issue, error) {
+// Parse the ndjson file specified by path
+// and return the issues ordered by ID (asc)
+// Also apply any filters to all comments
+func Parse(path string, commentExclusionFilter []string) ([]*Issue, error) {
 	issues := []*Issue{}
 
 	src, err := os.Open(path)
@@ -83,10 +86,10 @@ func Parse(path string) ([]*Issue, error) {
 		issues = append(issues, issue)
 	}
 
-	return curateIssues(issues), nil
+	return curateIssues(issues, commentExclusionFilter), nil
 }
 
-func curateIssues(issues []*Issue) []*Issue {
+func curateIssues(issues []*Issue, commentExclusionFilter []string) []*Issue {
 	// sort issues
 	sort.Slice(issues, func(i, j int) bool {
 		return issues[i].Id < issues[j].Id
@@ -94,16 +97,7 @@ func curateIssues(issues []*Issue) []*Issue {
 
 	// filter comments
 	for _, issue := range issues {
-		issue.Comments = filterComments(issue.Comments, []string{
-			"mentioned in",
-			"assigned to",
-			"unassigned",
-			"changed the description",
-			"created branch",
-			"changed title",
-			"marked the checklist",
-			"marked this issue",
-		})
+		issue.Comments = filterComments(issue.Comments, commentExclusionFilter)
 	}
 
 	return issues

@@ -16,22 +16,19 @@ func UsersCommand(globals *GlobalVariables) *cobra.Command {
 			Long:  descr,
 			Run: func(cmd *cobra.Command, args []string) {
 				// parse ndjson
-				issues, err := gitlab.Parse(globals.ExportPath)
+				issues, err := gitlab.Parse(globals.ExportPath, globals.CommentExclusionFilter)
 				if err != nil {
 					fmt.Fprintf(cmd.OutOrStderr(), "error: %v\n", err)
 					return
 				}
 
-				// find unique users
+				// find unique users in issues only
 				uids := map[int]bool{}
 				for _, issue := range issues {
 					uids[issue.AuthorId] = true
-					for _, comment := range issue.Comments {
-						uids[comment.AuthorId] = true
-					}
 				}
 
-				fmt.Fprintln(cmd.OutOrStderr(), "Unique User IDs:")
+				fmt.Fprintln(cmd.OutOrStderr(), "Unique User IDs in Issues:")
 
 				for uid, _ := range uids {
 					fmt.Fprintf(cmd.OutOrStderr(), "%d\n", uid)

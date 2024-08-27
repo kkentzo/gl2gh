@@ -25,7 +25,7 @@ func PostCommand(globals *GlobalVariables) *cobra.Command {
 				mappings := ReverseMapping(globals.UserMappings)
 
 				// parse ndjson
-				issues, err := gitlab.Parse(globals.ExportPath)
+				issues, err := gitlab.Parse(globals.ExportPath, globals.CommentExclusionFilter)
 				if err != nil {
 					fmt.Fprintf(cmd.OutOrStderr(), "error: %v\n", err)
 					return
