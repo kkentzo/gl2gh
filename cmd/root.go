@@ -45,17 +45,20 @@ func New() *cobra.Command {
 	root.AddCommand(UsersCommand(globals))
 	root.AddCommand(PostCommand(globals))
 	root.AddCommand(ImportCommand(globals))
+	root.AddCommand(RateCommand(globals))
 
 	return root
 }
 
-func requireGlobalFlags(cmd *cobra.Command, globals *GlobalVariables) *cobra.Command {
+func requireGlobalFlags(cmd *cobra.Command, globals *GlobalVariables, require []string) *cobra.Command {
 	cmd.Flags().StringVarP(&globals.ExportPath, "export", "e", "", "directory that contains the uncompressed gitlab export")
 	cmd.Flags().StringSliceVarP(&globals.CommentExclusionFilter, "filter", "f", DefaultCommentExclusionFilter, "exclude comments that start with the supplied substrings")
 	cmd.Flags().StringToIntVarP(&globals.UserMappings, "users", "u", map[string]int{}, "mapping of github user names to gitlab UIDs")
 	cmd.Flags().StringToStringVar(&globals.ReplacePatterns, "replace", map[string]string{},
 		"specify pairs of replacement patterns for issue and comment texts (useful for replacing link URIs)")
 	cmd.Flags().BoolVarP(&globals.Debug, "debug", "d", false, "whether to display debugging information")
-	cmd.MarkFlagRequired("export")
+	for _, req := range require {
+		cmd.MarkFlagRequired(req)
+	}
 	return cmd
 }

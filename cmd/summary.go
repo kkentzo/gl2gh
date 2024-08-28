@@ -34,5 +34,5 @@ func SummaryCommand(globals *GlobalVariables) *cobra.Command {
 		}
 	)
 
-	return requireGlobalFlags(cmd, globals)
+	return requireGlobalFlags(cmd, globals, []string{"export"})
 }

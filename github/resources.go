@@ -3,6 +3,7 @@ package github
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/kkentzo/gl-to-gh/gitlab"
 )
@@ -72,15 +73,21 @@ func (issue *Issue) Post(client *Client, repo string) error {
 	if err != nil {
 		return fmt.Errorf("failed to serialize issue: %v\nThe problematic issue is:\n%v\n", err, issue)
 	}
-	res, err := client.Post(urljoin(apiEndpoint, issue.Path(repo)), body)
+	// prepare the request
+	req, err := client.NewRequest(http.MethodPost, urljoin(apiEndpoint, issue.Path(repo)), body)
 	if err != nil {
-		return fmt.Errorf("error posting issue: %v", err)
+		return fmt.Errorf("error preparing the request: %v", err)
 	}
+	resBody, err := client.Do(req, http.StatusCreated)
+	if err != nil {
+		return fmt.Errorf("request failed: %v", err)
+	}
+
 	// figure out the URL for posting the comments
 	response := struct {
 		CommentsURL string `json:"comments_url"`
 	}{}
-	if err := json.Unmarshal(res, &response); err != nil {
+	if err := json.Unmarshal(resBody, &response); err != nil {
 		return fmt.Errorf("error parsing issue response body: %v", err)
 	}
 
@@ -92,7 +99,11 @@ func (issue *Issue) Post(client *Client, repo string) error {
 			return fmt.Errorf("error serializing comment: %v\nThe problematic comment is:\n%v\n", err, comment)
 		}
 		// post the comment
-		_, err = client.Post(response.CommentsURL, body)
+		req, err = client.NewRequest(http.MethodPost, response.CommentsURL, body)
+		if err != nil {
+			return fmt.Errorf("failed to prepare request: %v", err)
+		}
+		_, err = client.Do(req, http.StatusCreated)
 		if err != nil {
 			return fmt.Errorf("error posting comment: %v", err)
 		}

@@ -65,5 +65,5 @@ func PostCommand(globals *GlobalVariables) *cobra.Command {
 	cmd.MarkFlagRequired("id")
 	cmd.MarkFlagRequired("repo")
 	cmd.MarkFlagRequired("token")
-	return requireGlobalFlags(cmd, globals)
+	return requireGlobalFlags(cmd, globals, []string{"export"})
 }

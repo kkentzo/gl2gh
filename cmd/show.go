@@ -64,5 +64,5 @@ func ShowCommand(globals *GlobalVariables) *cobra.Command {
 
 	cmd.Flags().UintVar(&issueId, "id", 0, "the ID of the issue to be displated")
 	cmd.MarkFlagRequired("id")
-	return requireGlobalFlags(cmd, globals)
+	return requireGlobalFlags(cmd, globals, []string{"export"})
 }

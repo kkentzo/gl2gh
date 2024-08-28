@@ -77,5 +77,5 @@ func ImportCommand(globals *GlobalVariables) *cobra.Command {
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "if true then no API call will be made")
 	cmd.MarkFlagRequired("repo")
 	cmd.MarkFlagRequired("token")
-	return requireGlobalFlags(cmd, globals)
+	return requireGlobalFlags(cmd, globals, []string{"export"})
 }
