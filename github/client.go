@@ -35,6 +35,7 @@ type Client struct {
 	client *http.Client
 	dryRun bool
 	debug  bool
+	count  int
 }
 
 func NewClient(token string, dryRun, debug bool) *Client {
@@ -44,6 +45,10 @@ func NewClient(token string, dryRun, debug bool) *Client {
 		dryRun: dryRun,
 		client: &http.Client{Timeout: defaultTimeout},
 	}
+}
+
+func (c *Client) RequestCount() int {
+	return c.count
 }
 
 func (c *Client) RateLimit() (*Rate, error) {
@@ -87,6 +92,8 @@ func (c *Client) Do(req *http.Request, expectedStatusCode int) ([]byte, error) {
 		return nil, fmt.Errorf("http client: request error: %v", err)
 	}
 
+	c.count += 1
+
 	// resource was created -- read and return the body
 	defer resp.Body.Close()
 	respBody, err := io.ReadAll(resp.Body)
@@ -102,7 +109,7 @@ func (c *Client) Do(req *http.Request, expectedStatusCode int) ([]byte, error) {
 		if c.debug {
 			log.Printf("[http] RESPONSE BODY\n%s", respBody)
 		}
-		return nil, fmt.Errorf("http client: status code: %d (expected %d)", resp.StatusCode, expectedStatusCode)
+		return respBody, fmt.Errorf("http client: status code: %d (expected %d)", resp.StatusCode, expectedStatusCode)
 	}
 
 	return respBody, nil

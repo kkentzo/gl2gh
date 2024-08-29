@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/kkentzo/gl-to-gh/gitlab"
 )
@@ -67,7 +68,7 @@ func (issue *Issue) Comments() []*Comment {
 	return issue.comments
 }
 
-func (issue *Issue) Post(client *Client, repo string) error {
+func (issue *Issue) Post(client *Client, repo string, delay time.Duration) error {
 	// serialize the issue
 	body, err := json.Marshal(issue)
 	if err != nil {
@@ -80,7 +81,7 @@ func (issue *Issue) Post(client *Client, repo string) error {
 	}
 	resBody, err := client.Do(req, http.StatusCreated)
 	if err != nil {
-		return fmt.Errorf("request failed: %v", err)
+		return fmt.Errorf("request failed: %v\nResponse Body=%s", err, string(resBody))
 	}
 
 	// figure out the URL for posting the comments
@@ -93,6 +94,7 @@ func (issue *Issue) Post(client *Client, repo string) error {
 
 	// OK, let's post the comments now
 	for _, comment := range issue.comments {
+		time.Sleep(delay)
 		// serialize the comment
 		body, err = json.Marshal(comment)
 		if err != nil {

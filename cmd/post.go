@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/kkentzo/gl-to-gh/github"
 	"github.com/kkentzo/gl-to-gh/gitlab"
@@ -13,6 +14,7 @@ func PostCommand(globals *GlobalVariables) *cobra.Command {
 		issueId uint
 		repo    string
 		token   string
+		delay   time.Duration
 		labels  []string
 		dryRun  bool
 
@@ -50,7 +52,7 @@ func PostCommand(globals *GlobalVariables) *cobra.Command {
 				if err != nil {
 					fmt.Fprintf(cmd.OutOrStderr(), "Preparation error: %v\n", err)
 				}
-				if err := ghIssue.Post(client, repo); err != nil {
+				if err := ghIssue.Post(client, repo, delay); err != nil {
 					fmt.Fprintf(cmd.OutOrStderr(), "Posting error: %v\n", err)
 				}
 			},
@@ -60,6 +62,7 @@ func PostCommand(globals *GlobalVariables) *cobra.Command {
 	cmd.Flags().UintVar(&issueId, "id", 0, "the ID of the issue to be displated")
 	cmd.Flags().StringVarP(&repo, "repo", "r", "", "the target github repo in the form 'user_or_org/repo_name'")
 	cmd.Flags().StringVarP(&token, "token", "t", "", "the API token for authenticating with github API")
+	cmd.Flags().DurationVar(&delay, "delay", time.Duration(10*time.Millisecond), "delay between successive API calls")
 	cmd.Flags().StringSliceVarP(&labels, "labels", "l", []string{}, "a comma-separated list of labels to be attached to the issue")
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "if true then no API call will be made")
 	cmd.MarkFlagRequired("id")
