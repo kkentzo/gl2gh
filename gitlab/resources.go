@@ -19,7 +19,9 @@ type Issue struct {
 		UserId int `json:"user_id"`
 	} `json:"issue_assignees"`
 	Comments  []*Comment `json:"notes"`
+	State     string     `json:"state"`
 	CreatedAt time.Time  `json:"created_at"`
+	ClosedAt  time.Time  `json:"closed_at"`
 }
 
 func (issue Issue) Convert(mappings map[int]string, replPatterns map[string]string) (string, error) {
@@ -33,10 +35,18 @@ func (issue Issue) Convert(mappings map[int]string, replPatterns map[string]stri
 		return "", err
 	}
 
-	return fmt.Sprintf("\nISSUE IMPORTED FROM GITLAB [id=%d]\ncreated: `%s`\noriginal author: %s\n\n---\n\n%s",
+	closedAt := "<n/a>"
+	if !issue.ClosedAt.IsZero() {
+		closedAt = issue.ClosedAt.Format(time.RFC3339)
+	}
+
+	return fmt.Sprintf("\nISSUE IMPORTED FROM GITLAB [id=%d] [state=%s]\ncreated: `%s`\nclosed: `%s`\noriginal author: %s\ncomments: %d\n\n---\n\n%s",
 		issue.Id,
+		issue.State,
 		issue.CreatedAt.Format(time.RFC3339),
+		closedAt,
 		author,
+		len(issue.Comments),
 		description), nil
 }
 
