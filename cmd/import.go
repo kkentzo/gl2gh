@@ -11,11 +11,12 @@ import (
 
 func ImportCommand(globals *GlobalVariables) *cobra.Command {
 	var (
-		delay  time.Duration
-		repo   string
-		token  string
-		labels []string
-		dryRun bool
+		delay       time.Duration
+		startFromId int
+		repo        string
+		token       string
+		labels      []string
+		dryRun      bool
 
 		descr = "Mass import of gitlab issues to github"
 		cmd   = &cobra.Command{
@@ -26,7 +27,7 @@ func ImportCommand(globals *GlobalVariables) *cobra.Command {
 				client := github.NewClient(token, dryRun, globals.Debug)
 
 				t0 := time.Now()
-				log.Printf("Starting with delay=%v", delay)
+				log.Printf("Starting from ID=%d [delay=%v]", startFromId, delay)
 				defer func() { log.Printf("Duration: %v\nRequest Count: %d", time.Now().Sub(t0), client.RequestCount()) }()
 
 				mappings := ReverseMapping(globals.UserMappings)
@@ -55,7 +56,7 @@ func ImportCommand(globals *GlobalVariables) *cobra.Command {
 
 				last := issues[len(issues)-1]
 
-				for i := 1; i <= last.Id; i++ {
+				for i := startFromId; i <= last.Id; i++ {
 					if issue, ok := issueMap[i]; ok {
 						if err = issue.Post(client, repo); err != nil {
 							log.Printf("[#%d] failed to POST issue: %v\n", i, err)
@@ -78,6 +79,7 @@ func ImportCommand(globals *GlobalVariables) *cobra.Command {
 		}
 	)
 
+	cmd.Flags().IntVar(&startFromId, "start", 1, "ID to start the migration from (lower IDs will be skipped)")
 	cmd.Flags().StringVarP(&repo, "repo", "r", "", "the target github repo in the form 'user_or_org/repo_name'")
 	cmd.Flags().StringVarP(&token, "token", "t", "", "the API token for authenticating with github API")
 	cmd.Flags().DurationVar(&delay, "delay", time.Duration(10*time.Second), "delay between successive API calls")
