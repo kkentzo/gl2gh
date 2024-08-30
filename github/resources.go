@@ -21,6 +21,10 @@ func New(glIssue *gitlab.Issue, mappings map[int]string, labels []string, replPa
 	if err != nil {
 		return nil, err
 	}
+	if glIssue.IsClosed() {
+		labels = append(labels, "closed")
+	}
+
 	issue := &Issue{
 		Title:     glIssue.Title,
 		Body:      body,

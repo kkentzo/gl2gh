@@ -36,7 +36,7 @@ func (issue Issue) Convert(mappings map[int]string, replPatterns map[string]stri
 	}
 
 	closedAt := "<n/a>"
-	if !issue.ClosedAt.IsZero() {
+	if issue.IsClosed() {
 		closedAt = issue.ClosedAt.Format(time.RFC3339)
 	}
 
@@ -52,6 +52,10 @@ func (issue Issue) Convert(mappings map[int]string, replPatterns map[string]stri
 
 func (issue Issue) Summarize() string {
 	return fmt.Sprintf("[%d] [uid=%d] [comments=%d] %s\n", issue.Id, issue.AuthorId, len(issue.Comments), issue.Title)
+}
+
+func (issue Issue) IsClosed() bool {
+	return !issue.ClosedAt.IsZero()
 }
 
 type Comment struct {
