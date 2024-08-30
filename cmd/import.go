@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -11,12 +12,14 @@ import (
 
 func ImportCommand(globals *GlobalVariables) *cobra.Command {
 	var (
-		delay       time.Duration
-		startFromId int
-		repo        string
-		token       string
-		labels      []string
-		dryRun      bool
+		commentsOnly bool
+		reverse      bool
+		delay        time.Duration
+		startFromId  int
+		repo         string
+		token        string
+		labels       []string
+		dryRun       bool
 
 		descr = "Mass import of gitlab issues to github"
 		cmd   = &cobra.Command{
@@ -55,30 +58,42 @@ func ImportCommand(globals *GlobalVariables) *cobra.Command {
 				}
 
 				last := issues[len(issues)-1]
+				lo := startFromId
+				hi := last.Id
+				if commentsOnly && reverse {
+					log.Printf("Reversing order [comments=%v] [reverse=%v]", commentsOnly, reverse)
+					lo, hi = hi, lo
+				}
 
-				for i := startFromId; i <= last.Id; i++ {
-					if issue, ok := issueMap[i]; ok {
-						if err = issue.Post(client, repo); err != nil {
-							log.Printf("[#%d] failed to POST issue: %v\n", i, err)
+				for iid := lo; iid <= hi; iid++ {
+					if commentsOnly {
+						if issue, err := PostComments(iid, issueMap, client, repo, labels, delay); err != nil {
+							log.Printf("%v", err)
 							return
 						} else {
-							log.Printf("[#%d] %s (%d comments)", i, issue.Title, len(issue.Comments()))
+							if issue == nil {
+								log.Printf("[#%d] Issue does not exist (0 comments)", iid)
+							} else {
+								log.Printf("[#%d] %s (%d comments)", iid, issue.Title, len(issue.Comments()))
+							}
 						}
 					} else {
-						// create placeholder issue
-						if err = github.NewPlaceholder(labels).Post(client, repo); err != nil {
-							log.Printf("[#%d] failed to POST placeholder issue: %v\n", i, err)
+						if issue, err := PostIssue(iid, issueMap, client, repo, labels); err != nil {
+							log.Printf("%v", err)
 							return
 						} else {
-							log.Printf("[#%d] PLACEHOLDER", i)
+							log.Printf("[#%d] %s (%d comments)", iid, issue.Title, len(issue.Comments()))
 						}
 					}
+
 					time.Sleep(delay)
 				}
 			},
 		}
 	)
 
+	cmd.Flags().BoolVar(&commentsOnly, "comments", false, "import comments only (assumes all issues have been imported and have the same IDs)")
+	cmd.Flags().BoolVar(&reverse, "reverse", false, "reverse the order of issue IDs (only for comments)")
 	cmd.Flags().IntVar(&startFromId, "start", 1, "ID to start the migration from (lower IDs will be skipped)")
 	cmd.Flags().StringVarP(&repo, "repo", "r", "", "the target github repo in the form 'user_or_org/repo_name'")
 	cmd.Flags().StringVarP(&token, "token", "t", "", "the API token for authenticating with github API")
@@ -88,4 +103,35 @@ func ImportCommand(globals *GlobalVariables) *cobra.Command {
 	cmd.MarkFlagRequired("repo")
 	cmd.MarkFlagRequired("token")
 	return requireGlobalFlags(cmd, globals, []string{"export"})
+}
+
+func PostIssue(iid int, issueMap map[int]*github.Issue, client *github.Client, repo string, labels []string) (*github.Issue, error) {
+	if issue, ok := issueMap[iid]; ok {
+		if err := issue.Post(client, repo); err != nil {
+			return issue, fmt.Errorf("[#%d] failed to POST issue: %v\n", iid, err)
+		} else {
+			return issue, nil
+		}
+	} else {
+		// create placeholder issue
+		issue := github.NewPlaceholder(labels)
+		if err := issue.Post(client, repo); err != nil {
+			return issue, fmt.Errorf("[#%d] failed to POST placeholder issue: %v\n", iid, err)
+		} else {
+			return issue, nil
+		}
+	}
+}
+
+func PostComments(iid int, issueMap map[int]*github.Issue, client *github.Client, repo string, labels []string, delay time.Duration) (*github.Issue, error) {
+	if issue, ok := issueMap[iid]; ok {
+		for _, comment := range issue.Comments() {
+			if err := comment.Post(client, repo, iid); err != nil {
+				return nil, fmt.Errorf("[#%d] failed to post comment: %v", iid, err)
+			}
+			time.Sleep(delay)
+		}
+		return issue, nil
+	}
+	return nil, nil
 }
