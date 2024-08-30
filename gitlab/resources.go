@@ -33,7 +33,8 @@ func (issue Issue) Convert(mappings map[int]string, replPatterns map[string]stri
 		return "", err
 	}
 
-	return fmt.Sprintf("\nISSUE IMPORTED FROM GITLAB\ncreated: `%s`\noriginal author: %s\n\n---\n\n%s",
+	return fmt.Sprintf("\nISSUE IMPORTED FROM GITLAB [id=%d]\ncreated: `%s`\noriginal author: %s\n\n---\n\n%s",
+		issue.Id,
 		issue.CreatedAt.Format(time.RFC3339),
 		author,
 		description), nil

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/kkentzo/gl-to-gh/gitlab"
 )
@@ -68,7 +67,7 @@ func (issue *Issue) Comments() []*Comment {
 	return issue.comments
 }
 
-func (issue *Issue) Post(client *Client, repo string, delay time.Duration) error {
+func (issue *Issue) Post(client *Client, repo string) error {
 	// serialize the issue
 	body, err := json.Marshal(issue)
 	if err != nil {
@@ -92,28 +91,27 @@ func (issue *Issue) Post(client *Client, repo string, delay time.Duration) error
 		return fmt.Errorf("error parsing issue response body: %v", err)
 	}
 
-	// OK, let's post the comments now
-	for _, comment := range issue.comments {
-		time.Sleep(delay)
-		// serialize the comment
-		body, err = json.Marshal(comment)
-		if err != nil {
-			return fmt.Errorf("error serializing comment: %v\nThe problematic comment is:\n%v\n", err, comment)
-		}
-		// post the comment
-		req, err = client.NewRequest(http.MethodPost, response.CommentsURL, body)
-		if err != nil {
-			return fmt.Errorf("failed to prepare request: %v", err)
-		}
-		_, err = client.Do(req, http.StatusCreated)
-		if err != nil {
-			return fmt.Errorf("error posting comment: %v", err)
-		}
-	}
-
 	return err
 }
 
 type Comment struct {
 	Body string `json:"body"`
+}
+
+func (comment *Comment) Post(client *Client, repo string, issueId int) error {
+	// serialize the comment
+	body, err := json.Marshal(comment)
+	if err != nil {
+		return fmt.Errorf("error serializing comment: %v\nThe problematic comment is:\n%v\n", err, comment)
+	}
+	// post the comment
+	req, err := client.NewRequest(http.MethodPost, "http://foo", body)
+	if err != nil {
+		return fmt.Errorf("failed to prepare request: %v", err)
+	}
+	if _, err = client.Do(req, http.StatusCreated); err != nil {
+		return fmt.Errorf("error posting comment: %v", err)
+	}
+
+	return nil
 }

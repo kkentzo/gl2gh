@@ -27,7 +27,7 @@ func ImportCommand(globals *GlobalVariables) *cobra.Command {
 
 				t0 := time.Now()
 				log.Printf("Starting with delay=%v", delay)
-				defer log.Printf("Duration: %v\nRequest Count: %d", time.Now().Sub(t0), client.RequestCount())
+				defer func() { log.Printf("Duration: %v\nRequest Count: %d", time.Now().Sub(t0), client.RequestCount()) }()
 
 				mappings := ReverseMapping(globals.UserMappings)
 
@@ -57,7 +57,7 @@ func ImportCommand(globals *GlobalVariables) *cobra.Command {
 
 				for i := 1; i <= last.Id; i++ {
 					if issue, ok := issueMap[i]; ok {
-						if err = issue.Post(client, repo, delay); err != nil {
+						if err = issue.Post(client, repo); err != nil {
 							log.Printf("[#%d] failed to POST issue: %v\n", i, err)
 							return
 						} else {
@@ -65,7 +65,7 @@ func ImportCommand(globals *GlobalVariables) *cobra.Command {
 						}
 					} else {
 						// create placeholder issue
-						if err = github.NewPlaceholder(labels).Post(client, repo, delay); err != nil {
+						if err = github.NewPlaceholder(labels).Post(client, repo); err != nil {
 							log.Printf("[#%d] failed to POST placeholder issue: %v\n", i, err)
 							return
 						} else {

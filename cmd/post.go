@@ -52,7 +52,7 @@ func PostCommand(globals *GlobalVariables) *cobra.Command {
 				if err != nil {
 					fmt.Fprintf(cmd.OutOrStderr(), "Preparation error: %v\n", err)
 				}
-				if err := ghIssue.Post(client, repo, delay); err != nil {
+				if err := ghIssue.Post(client, repo); err != nil {
 					fmt.Fprintf(cmd.OutOrStderr(), "Posting error: %v\n", err)
 				}
 			},
