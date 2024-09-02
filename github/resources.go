@@ -102,6 +102,10 @@ type Comment struct {
 	Body string `json:"body"`
 }
 
+func (comment *Comment) Path(repo string, issueId int) string {
+	return fmt.Sprintf("/repos/%s/issues/%d/comments", repo, issueId)
+}
+
 func (comment *Comment) Post(client *Client, repo string, issueId int) error {
 	// serialize the comment
 	body, err := json.Marshal(comment)
@@ -109,7 +113,7 @@ func (comment *Comment) Post(client *Client, repo string, issueId int) error {
 		return fmt.Errorf("error serializing comment: %v\nThe problematic comment is:\n%v\n", err, comment)
 	}
 	// post the comment
-	req, err := client.NewRequest(http.MethodPost, "http://foo", body)
+	req, err := client.NewRequest(http.MethodPost, urljoin(apiEndpoint, comment.Path(repo, issueId)), body)
 	if err != nil {
 		return fmt.Errorf("failed to prepare request: %v", err)
 	}

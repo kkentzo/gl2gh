@@ -110,9 +110,12 @@ func curateIssues(issues []*Issue, commentExclusionFilter []string) []*Issue {
 		return issues[i].Id < issues[j].Id
 	})
 
-	// filter comments
+	// filter and sort comments
 	for _, issue := range issues {
 		issue.Comments = filterComments(issue.Comments, commentExclusionFilter)
+		sort.Slice(issue.Comments, func(i, j int) bool {
+			return issue.Comments[i].CreatedAt.Before(issue.Comments[j].CreatedAt)
+		})
 	}
 
 	return issues

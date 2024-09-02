@@ -58,14 +58,33 @@ func ImportCommand(globals *GlobalVariables) *cobra.Command {
 				}
 
 				last := issues[len(issues)-1]
-				lo := startFromId
-				hi := last.Id
-				if commentsOnly && reverse {
-					log.Printf("Reversing order [comments=%v] [reverse=%v]", commentsOnly, reverse)
-					lo, hi = hi, lo
+				start := startFromId
+				end := last.Id
+				if commentsOnly {
+					if reverse {
+						start, end = end, start
+						log.Printf("Reversing order [comments=%v] [reverse=%v] [start=%d] [end=%d]", commentsOnly, reverse, start, end)
+					} else {
+						log.Printf("--reverse can be specified only in conjuction with --comments [reverse=%v] [comments=%v]",
+							reverse, commentsOnly)
+						return
+					}
 				}
 
-				for iid := lo; iid <= hi; iid++ {
+				iid := start
+				for {
+					// check iteration
+					if reverse {
+						if iid < end {
+							break
+						}
+					} else {
+						if iid > end {
+							break
+						}
+					}
+
+					// perform operations
 					if commentsOnly {
 						if issue, err := PostComments(iid, issueMap, client, repo, labels, delay); err != nil {
 							log.Printf("%v", err)
@@ -84,9 +103,15 @@ func ImportCommand(globals *GlobalVariables) *cobra.Command {
 						} else {
 							log.Printf("[#%d] %s (%d comments)", iid, issue.Title, len(issue.Comments()))
 						}
+						time.Sleep(delay)
 					}
 
-					time.Sleep(delay)
+					// advance iteration
+					if reverse {
+						iid--
+					} else {
+						iid++
+					}
 				}
 			},
 		}
