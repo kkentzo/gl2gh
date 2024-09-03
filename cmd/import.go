@@ -16,6 +16,7 @@ func ImportCommand(globals *GlobalVariables) *cobra.Command {
 		reverse      bool
 		delay        time.Duration
 		startFromId  int
+		endAtId      int
 		repo         string
 		token        string
 		labels       []string
@@ -30,7 +31,7 @@ func ImportCommand(globals *GlobalVariables) *cobra.Command {
 				client := github.NewClient(token, dryRun, globals.Debug)
 
 				t0 := time.Now()
-				log.Printf("Starting from ID=%d [delay=%v]", startFromId, delay)
+
 				defer func() { log.Printf("Duration: %v\nRequest Count: %d", time.Now().Sub(t0), client.RequestCount()) }()
 
 				mappings := ReverseMapping(globals.UserMappings)
@@ -60,6 +61,9 @@ func ImportCommand(globals *GlobalVariables) *cobra.Command {
 				last := issues[len(issues)-1]
 				start := startFromId
 				end := last.Id
+				if endAtId > 0 {
+					end = endAtId
+				}
 				if commentsOnly {
 					if reverse {
 						start, end = end, start
@@ -69,6 +73,8 @@ func ImportCommand(globals *GlobalVariables) *cobra.Command {
 							reverse, commentsOnly)
 						return
 					}
+				} else {
+					log.Printf("[start=%d] [end=%d] [delay=%v]", start, end, delay)
 				}
 
 				iid := start
@@ -120,6 +126,7 @@ func ImportCommand(globals *GlobalVariables) *cobra.Command {
 	cmd.Flags().BoolVar(&commentsOnly, "comments", false, "import comments only (assumes all issues have been imported and have the same IDs)")
 	cmd.Flags().BoolVar(&reverse, "reverse", false, "reverse the order of issue IDs (only for comments)")
 	cmd.Flags().IntVar(&startFromId, "start", 1, "ID to start the migration from (lower IDs will be skipped)")
+	cmd.Flags().IntVar(&endAtId, "end", 0, "ID to stop the migration at (inclusive)")
 	cmd.Flags().StringVarP(&repo, "repo", "r", "", "the target github repo in the form 'user_or_org/repo_name'")
 	cmd.Flags().StringVarP(&token, "token", "t", "", "the API token for authenticating with github API")
 	cmd.Flags().DurationVar(&delay, "delay", time.Duration(10*time.Second), "delay between successive API calls")
